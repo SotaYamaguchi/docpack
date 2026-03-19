@@ -42,7 +42,7 @@ func TestLoadConfig(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer os.Remove(tmpfile.Name())
+			defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 			if _, err := tmpfile.Write([]byte(tt.configJSON)); err != nil {
 				t.Fatal(err)
@@ -93,7 +93,7 @@ func TestResolvePrefix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	configData := map[string]any{
 		"projects": map[string]string{
@@ -182,7 +182,7 @@ func TestRenameFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// テスト用のファイルを作成
 	testFiles := []string{
@@ -242,7 +242,7 @@ func TestRenameFilesWithSuffix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// テスト用のファイルを作成
 	testFile := "PREFIX_main.txt"
@@ -273,7 +273,7 @@ func TestCollectFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// テスト用のファイルを作成
 	testFiles := []string{

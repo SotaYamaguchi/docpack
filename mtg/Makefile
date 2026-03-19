@@ -1,4 +1,4 @@
-.PHONY: build install uninstall clean migrate-config
+.PHONY: build install uninstall clean migrate-config lint test
 
 # ビルド設定
 BINARY_NAME=mtg
@@ -65,3 +65,12 @@ uninstall:
 clean:
 	@rm -f $(BINARY_NAME)
 	@echo "ビルド成果物を削除しました"
+
+lint:
+	@echo "Linting..."
+	@golangci-lint run
+
+test:
+	@echo "Running tests..."
+	@go test -v -race -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out

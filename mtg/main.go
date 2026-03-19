@@ -1,3 +1,4 @@
+// Package main provides a CLI tool for organizing meeting documents.
 package main
 
 import (

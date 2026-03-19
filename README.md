@@ -174,6 +174,19 @@ mtg memo -project project-a
 
 ## 開発
 
+### 開発環境のセットアップ
+
+```bash
+# golangci-lintのインストール（macOS）
+brew install golangci-lint
+
+# pre-commitのインストール（オプション、推奨）
+brew install pre-commit
+
+# pre-commitフックを有効化
+pre-commit install
+```
+
 ### ローカルでのビルドとテスト
 
 ```bash
@@ -181,8 +194,15 @@ mtg memo -project project-a
 cd mtg
 make build
 
+# Lint実行
+make lint
+
 # ユニットテスト実行
+make test
+
+# または手動で
 go test -v
+golangci-lint run
 
 # カバレッジ付きテスト
 go test -v -race -coverprofile=coverage.out
