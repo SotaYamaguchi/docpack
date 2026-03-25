@@ -13,11 +13,16 @@ import (
 
 // Template represents an email template.
 type Template struct {
-	To      []string
-	Cc      []string
-	Bcc     []string
+	// To contains recipient email addresses.
+	To []string
+	// Cc contains carbon copy email addresses.
+	Cc []string
+	// Bcc contains blind carbon copy email addresses.
+	Bcc []string
+	// Subject is the email subject line.
 	Subject string
-	Body    string
+	// Body is the email body content.
+	Body string
 }
 
 // Get retrieves a mail template for a project and mail type.

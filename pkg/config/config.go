@@ -10,7 +10,9 @@ import (
 
 // Config represents the application configuration.
 type Config struct {
-	Projects      map[string]string            `json:"projects"`
+	// Projects maps project names to file prefixes.
+	Projects map[string]string `json:"projects"`
+	// MailTemplates maps project names to mail template paths by type (prep/memo).
 	MailTemplates map[string]map[string]string `json:"mail_templates"`
 }
 
