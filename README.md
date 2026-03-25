@@ -104,5 +104,5 @@ Subject: 【プロジェクトA】MTG資料送付 {{DATE}}
 
 - タブ補完対応（zsh）
 - ヘルプ: `mtg help`
-- アンインストール: `cd mtg && make uninstall`
+- アンインストール: `make uninstall`
 - 開発者向け: [CONTRIBUTING.md](CONTRIBUTING.md)
