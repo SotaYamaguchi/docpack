@@ -1,6 +1,6 @@
-# docpack
+# meeting-toolkit
 
-[![Test](https://github.com/SotaYamaguchi/docpack/actions/workflows/test.yml/badge.svg)](https://github.com/SotaYamaguchi/docpack/actions/workflows/test.yml)
+[![Test](https://github.com/SotaYamaguchi/meeting-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/SotaYamaguchi/meeting-toolkit/actions/workflows/test.yml)
 
 MTG前後の資料ファイルを自動で整理するCLIツール。
 

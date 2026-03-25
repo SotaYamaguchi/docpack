@@ -60,7 +60,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "2. 使い方を確認してください:"
     echo "   mtg help"
     echo ""
-    echo "詳細: https://github.com/SotaYamaguchi/docpack#readme"
+    echo "詳細: https://github.com/SotaYamaguchi/meeting-toolkit#readme"
 else
     echo ""
     echo "⚠️  手動セットアップが必要です"
@@ -77,5 +77,5 @@ else
     echo "3. 使い方を確認してください:"
     echo "   mtg help"
     echo ""
-    echo "詳細: https://github.com/SotaYamaguchi/docpack#readme"
+    echo "詳細: https://github.com/SotaYamaguchi/meeting-toolkit#readme"
 fi

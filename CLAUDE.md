@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`docpack` is a CLI tool for organizing meeting documents before and after customer project meetings. It automates file renaming and collection based on project-specific prefixes.
+`meeting-toolkit` is a CLI tool for organizing meeting documents before and after customer project meetings. It automates file renaming and collection based on project-specific prefixes.
 
 ## Development Commands
 
