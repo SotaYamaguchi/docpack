@@ -328,3 +328,200 @@ func TestCollectFiles(t *testing.T) {
 		t.Errorf("File OTHER_file.txt should not have been moved")
 	}
 }
+
+func TestLoadConfigWithMailTemplates(t *testing.T) {
+	configJSON := `{
+		"projects": {
+			"test-project": "TEST_PREFIX"
+		},
+		"mail_templates": {
+			"test-project": {
+				"prep": {
+					"to": ["customer@example.com"],
+					"cc": ["team@example.com"],
+					"bcc": [],
+					"subject": "テスト件名",
+					"body": "テスト本文"
+				},
+				"memo": {
+					"to": ["customer@example.com"],
+					"cc": [],
+					"bcc": [],
+					"subject": "",
+					"body": "議事録本文"
+				}
+			}
+		}
+	}`
+
+	tmpfile, err := os.CreateTemp("", "config*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
+
+	if _, err := tmpfile.Write([]byte(configJSON)); err != nil {
+		t.Fatal(err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	config, err := loadConfig(tmpfile.Name())
+	if err != nil {
+		t.Fatalf("loadConfig() error = %v", err)
+	}
+
+	if config.MailTemplates == nil {
+		t.Error("MailTemplates should not be nil")
+		return
+	}
+
+	projectTemplate, ok := config.MailTemplates["test-project"]
+	if !ok {
+		t.Error("test-project template not found")
+		return
+	}
+
+	// prep テンプレートのチェック
+	if len(projectTemplate.Prep.To) != 1 || projectTemplate.Prep.To[0] != "customer@example.com" {
+		t.Errorf("prep.To = %v, want [customer@example.com]", projectTemplate.Prep.To)
+	}
+	if projectTemplate.Prep.Subject != "テスト件名" {
+		t.Errorf("prep.Subject = %v, want テスト件名", projectTemplate.Prep.Subject)
+	}
+	if projectTemplate.Prep.Body != "テスト本文" {
+		t.Errorf("prep.Body = %v, want テスト本文", projectTemplate.Prep.Body)
+	}
+
+	// memo テンプレートのチェック
+	if projectTemplate.Memo.Subject != "" {
+		t.Errorf("memo.Subject = %v, want empty string", projectTemplate.Memo.Subject)
+	}
+	if projectTemplate.Memo.Body != "議事録本文" {
+		t.Errorf("memo.Body = %v, want 議事録本文", projectTemplate.Memo.Body)
+	}
+}
+
+func TestGetMailTemplate(t *testing.T) {
+	configJSON := `{
+		"projects": {
+			"test-project": "TEST_PREFIX"
+		},
+		"mail_templates": {
+			"test-project": {
+				"prep": {
+					"to": ["customer@example.com"],
+					"cc": [],
+					"bcc": [],
+					"subject": "テスト件名",
+					"body": "テスト本文"
+				}
+			}
+		}
+	}`
+
+	tmpfile, err := os.CreateTemp("", "config*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
+
+	if _, err := tmpfile.Write([]byte(configJSON)); err != nil {
+		t.Fatal(err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name        string
+		project     string
+		mailType    string
+		wantErr     bool
+		wantSubject string
+	}{
+		{
+			name:        "正常なテンプレート取得",
+			project:     "test-project",
+			mailType:    "prep",
+			wantErr:     false,
+			wantSubject: "テスト件名",
+		},
+		{
+			name:     "存在しないプロジェクト",
+			project:  "nonexistent",
+			mailType: "prep",
+			wantErr:  true,
+		},
+		{
+			name:     "不正なメールタイプ",
+			project:  "test-project",
+			mailType: "invalid",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			template, err := getMailTemplate(tmpfile.Name(), tt.project, tt.mailType)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("getMailTemplate() error = nil, wantErr true")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("getMailTemplate() error = %v, wantErr false", err)
+				return
+			}
+
+			if template.Subject != tt.wantSubject {
+				t.Errorf("Subject = %v, want %v", template.Subject, tt.wantSubject)
+			}
+		})
+	}
+}
+
+func TestFormatMailOutput(t *testing.T) {
+	template := &MailTemplate{
+		To:      []string{"customer@example.com", "another@example.com"},
+		Cc:      []string{"team@example.com"},
+		Bcc:     []string{"bcc@example.com"},
+		Subject: "テスト件名",
+		Body:    "テスト本文\n複数行あります",
+	}
+
+	output := formatMailOutput(template)
+
+	expectedLines := []string{
+		"To: customer@example.com, another@example.com",
+		"Cc: team@example.com",
+		"Bcc: bcc@example.com",
+		"件名: テスト件名",
+		"",
+		"テスト本文",
+		"複数行あります",
+	}
+
+	for _, expected := range expectedLines {
+		if !contains(output, expected) {
+			t.Errorf("Output should contain: %q", expected)
+		}
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && containsSubstring(s, substr))
+}
+
+func containsSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

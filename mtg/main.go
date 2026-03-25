@@ -12,7 +12,21 @@ import (
 )
 
 type Config struct {
-	Projects map[string]string `json:"projects"`
+	Projects      map[string]string                `json:"projects"`
+	MailTemplates map[string]*ProjectMailTemplates `json:"mail_templates"`
+}
+
+type ProjectMailTemplates struct {
+	Prep *MailTemplate `json:"prep"`
+	Memo *MailTemplate `json:"memo"`
+}
+
+type MailTemplate struct {
+	To      []string `json:"to"`
+	Cc      []string `json:"cc"`
+	Bcc     []string `json:"bcc"`
+	Subject string   `json:"subject"`
+	Body    string   `json:"body"`
 }
 
 func main() {
@@ -31,6 +45,11 @@ func main() {
 		}
 	case "memo":
 		if err := runMemo(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "エラー: %v\n", err)
+			os.Exit(1)
+		}
+	case "mail":
+		if err := runMail(os.Args[2:]); err != nil {
 			fmt.Fprintf(os.Stderr, "エラー: %v\n", err)
 			os.Exit(1)
 		}
@@ -59,6 +78,7 @@ func printUsage() {
 	fmt.Println("使い方:")
 	fmt.Println("  mtg prep [オプション]    MTG前の送付資料を準備")
 	fmt.Println("  mtg memo [オプション]    MTG後の議事メモを整理")
+	fmt.Println("  mtg mail [オプション]    メールテンプレートを表示")
 	fmt.Println("  mtg list                 利用可能なプロジェクト一覧を表示")
 	fmt.Println("  mtg completion           タブ補完スクリプトを出力")
 	fmt.Println()
@@ -67,11 +87,13 @@ func printUsage() {
 	fmt.Println("  -prefix <値>       プレフィックスを直接指定")
 	fmt.Println("  -dir <パス>        対象ディレクトリ (デフォルト: .)")
 	fmt.Println("  -config <パス>     設定ファイルのパス")
+	fmt.Println("  -type <値>         メールタイプ (prep または memo, mail サブコマンド用)")
 	fmt.Println()
 	fmt.Println("例:")
 	fmt.Println("  mtg list")
 	fmt.Println("  mtg prep -project your-project")
 	fmt.Println("  mtg memo -project your-project")
+	fmt.Println("  mtg mail -project your-project -type prep")
 	fmt.Println()
 	fmt.Println("タブ補完のセットアップ (zsh):")
 	fmt.Println("  mtg completion > ~/.zsh/completions/_mtg")
@@ -119,6 +141,7 @@ _mtg() {
   subcommands=(
     'prep:MTG前の送付資料を準備'
     'memo:MTG後の議事メモを整理'
+    'mail:メールテンプレートを表示'
     'list:利用可能なプロジェクト一覧を表示'
     'completion:タブ補完スクリプトを出力'
     'help:ヘルプを表示'
@@ -129,6 +152,13 @@ _mtg() {
     '-project[プロジェクト名を指定]:project:_mtg_projects'
     '-prefix[プレフィックスを直接指定]:prefix:'
     '-dir[対象ディレクトリを指定]:directory:_files -/'
+    '-config[設定ファイルのパスを指定]:config file:_files'
+  )
+
+  local -a mail_options
+  mail_options=(
+    '-project[プロジェクト名を指定]:project:_mtg_projects'
+    '-type[メールタイプを指定]:type:(prep memo)'
     '-config[設定ファイルのパスを指定]:config file:_files'
   )
 
@@ -144,6 +174,9 @@ _mtg() {
       case $words[1] in
         prep|memo)
           _arguments $options
+          ;;
+        mail)
+          _arguments $mail_options
           ;;
       esac
       ;;
@@ -198,6 +231,35 @@ func runMemo(args []string) error {
 	}
 
 	return processMemoFiles(finalPrefix, *dir)
+}
+
+func runMail(args []string) error {
+	fs := flag.NewFlagSet("mail", flag.ExitOnError)
+	project := fs.String("project", "", "プロジェクト名")
+	mailType := fs.String("type", "", "メールタイプ (prep または memo)")
+	configPath := fs.String("config", getDefaultConfigPath(), "設定ファイルのパス")
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	if *project == "" {
+		return fmt.Errorf("-project フラグが必要です")
+	}
+
+	if *mailType == "" {
+		return fmt.Errorf("-type フラグが必要です (prep または memo)")
+	}
+
+	template, err := getMailTemplate(*configPath, *project, *mailType)
+	if err != nil {
+		return err
+	}
+
+	output := formatMailOutput(template)
+	fmt.Print(output)
+
+	return nil
 }
 
 func resolvePrefix(project, prefix, configPath string) (string, error) {
@@ -338,4 +400,69 @@ func collectFiles(prefix, dir, destinationFolder string) error {
 
 	fmt.Printf("\nファイルを %s に集約しました\n", destinationFolder)
 	return nil
+}
+
+func getMailTemplate(configPath, project, mailType string) (*MailTemplate, error) {
+	config, err := loadConfig(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("設定ファイル読み込みエラー: %w", err)
+	}
+
+	projectTemplates, ok := config.MailTemplates[project]
+	if !ok {
+		return nil, fmt.Errorf("プロジェクト '%s' のメールテンプレートが見つかりません", project)
+	}
+
+	var template *MailTemplate
+	switch mailType {
+	case "prep":
+		template = projectTemplates.Prep
+	case "memo":
+		template = projectTemplates.Memo
+	default:
+		return nil, fmt.Errorf("不正なメールタイプ: %s (prep または memo を指定してください)", mailType)
+	}
+
+	if template == nil {
+		return nil, fmt.Errorf("プロジェクト '%s' の %s テンプレートが見つかりません", project, mailType)
+	}
+
+	return template, nil
+}
+
+func formatMailOutput(template *MailTemplate) string {
+	var output strings.Builder
+
+	// To
+	if len(template.To) > 0 {
+		output.WriteString("To: ")
+		output.WriteString(strings.Join(template.To, ", "))
+		output.WriteString("\n")
+	}
+
+	// Cc
+	if len(template.Cc) > 0 {
+		output.WriteString("Cc: ")
+		output.WriteString(strings.Join(template.Cc, ", "))
+		output.WriteString("\n")
+	}
+
+	// Bcc
+	if len(template.Bcc) > 0 {
+		output.WriteString("Bcc: ")
+		output.WriteString(strings.Join(template.Bcc, ", "))
+		output.WriteString("\n")
+	}
+
+	// Subject
+	output.WriteString("件名: ")
+	output.WriteString(template.Subject)
+	output.WriteString("\n")
+
+	// Body
+	output.WriteString("\n")
+	output.WriteString(template.Body)
+	output.WriteString("\n")
+
+	return output.String()
 }
