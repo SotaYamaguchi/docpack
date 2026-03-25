@@ -292,7 +292,7 @@ func runMailInit(args []string) error {
 		return fmt.Errorf("テンプレートディレクトリ作成エラー: %w", err)
 	}
 
-	templatePath, err := createTemplateFile(templatesDir, *project, *mailType)
+	templatePath, existed, err := createTemplateFile(templatesDir, *project, *mailType)
 	if err != nil {
 		return err
 	}
@@ -303,8 +303,13 @@ func runMailInit(args []string) error {
 		return err
 	}
 
-	fmt.Printf("テンプレートファイルを作成しました: %s\n", templatePath)
-	fmt.Printf("config.jsonを更新しました\n")
+	if existed {
+		fmt.Printf("⚠️  テンプレートファイルは既に存在します: %s\n", templatePath)
+		fmt.Printf("✓ 既存のファイルを使用します\n")
+	} else {
+		fmt.Printf("✓ テンプレートファイルを作成しました: %s\n", templatePath)
+	}
+	fmt.Printf("✓ config.jsonを更新しました\n")
 	fmt.Printf("\nテンプレートを編集してください:\n")
 	fmt.Printf("  vim %s\n", templatePath)
 
@@ -568,12 +573,12 @@ func formatMailOutput(template *MailTemplate) string {
 	return output.String()
 }
 
-func createTemplateFile(templatesDir, project, mailType string) (string, error) {
+func createTemplateFile(templatesDir, project, mailType string) (string, bool, error) {
 	filename := fmt.Sprintf("%s-%s.txt", project, mailType)
 	templatePath := filepath.Join(templatesDir, filename)
 
 	if _, err := os.Stat(templatePath); err == nil {
-		return "", fmt.Errorf("テンプレートファイルが既に存在します: %s", templatePath)
+		return templatePath, true, nil
 	}
 
 	defaultTemplate := `To:
@@ -585,10 +590,10 @@ Subject:
 `
 
 	if err := os.WriteFile(templatePath, []byte(defaultTemplate), 0644); err != nil {
-		return "", fmt.Errorf("テンプレートファイル作成エラー: %w", err)
+		return "", false, fmt.Errorf("テンプレートファイル作成エラー: %w", err)
 	}
 
-	return templatePath, nil
+	return templatePath, false, nil
 }
 
 func updateConfigWithMailTemplate(configPath, project, mailType, templatePath string) error {

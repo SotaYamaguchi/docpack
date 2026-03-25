@@ -758,7 +758,7 @@ func TestCreateTemplateFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			templatePath, err := createTemplateFile(tmpDir, tt.project, tt.mailType)
+			templatePath, existed, err := createTemplateFile(tmpDir, tt.project, tt.mailType)
 
 			if tt.wantErr {
 				if err == nil {
@@ -770,6 +770,10 @@ func TestCreateTemplateFile(t *testing.T) {
 			if err != nil {
 				t.Errorf("createTemplateFile() error = %v, wantErr false", err)
 				return
+			}
+
+			if existed {
+				t.Error("existed should be false for new template")
 			}
 
 			expectedPath := filepath.Join(tmpDir, tt.wantFilename)
@@ -798,6 +802,45 @@ func TestCreateTemplateFile(t *testing.T) {
 				t.Error("Template should contain 'Subject:' header")
 			}
 		})
+	}
+}
+
+func TestCreateTemplateFileExisting(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "mtg-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+
+	filename := "test-project-prep.txt"
+	existingPath := filepath.Join(tmpDir, filename)
+	existingContent := "existing template content"
+
+	if err := os.WriteFile(existingPath, []byte(existingContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	templatePath, existed, err := createTemplateFile(tmpDir, "test-project", "prep")
+	if err != nil {
+		t.Errorf("createTemplateFile() should not error when file exists, got: %v", err)
+		return
+	}
+
+	if !existed {
+		t.Error("existed should be true when file already exists")
+	}
+
+	if templatePath != existingPath {
+		t.Errorf("templatePath = %v, want %v", templatePath, existingPath)
+	}
+
+	content, err := os.ReadFile(templatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(content) != existingContent {
+		t.Error("Existing file content should be preserved")
 	}
 }
 
