@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -661,6 +662,179 @@ func TestFormatMailOutput(t *testing.T) {
 			got := formatMailOutput(tt.template)
 			if got != tt.want {
 				t.Errorf("formatMailOutput() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCreateTemplateFile(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "mtg-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+
+	tests := []struct {
+		name         string
+		project      string
+		mailType     string
+		wantFilename string
+		wantErr      bool
+	}{
+		{
+			name:         "prep用テンプレート作成",
+			project:      "test-project",
+			mailType:     "prep",
+			wantFilename: "test-project-prep.txt",
+			wantErr:      false,
+		},
+		{
+			name:         "memo用テンプレート作成",
+			project:      "test-project",
+			mailType:     "memo",
+			wantFilename: "test-project-memo.txt",
+			wantErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			templatePath, err := createTemplateFile(tmpDir, tt.project, tt.mailType)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("createTemplateFile() error = nil, wantErr true")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("createTemplateFile() error = %v, wantErr false", err)
+				return
+			}
+
+			expectedPath := filepath.Join(tmpDir, tt.wantFilename)
+			if templatePath != expectedPath {
+				t.Errorf("templatePath = %v, want %v", templatePath, expectedPath)
+			}
+
+			if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+				t.Errorf("Template file not created at %v", templatePath)
+			}
+
+			content, err := os.ReadFile(templatePath)
+			if err != nil {
+				t.Errorf("Failed to read template file: %v", err)
+			}
+
+			if len(content) == 0 {
+				t.Error("Template file is empty")
+			}
+
+			contentStr := string(content)
+			if !strings.Contains(contentStr, "To:") {
+				t.Error("Template should contain 'To:' header")
+			}
+			if !strings.Contains(contentStr, "Subject:") {
+				t.Error("Template should contain 'Subject:' header")
+			}
+		})
+	}
+}
+
+func TestUpdateConfigWithMailTemplate(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "mtg-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+
+	tests := []struct {
+		name           string
+		initialConfig  string
+		project        string
+		mailType       string
+		templatePath   string
+		wantErr        bool
+		checkFunc      func(*testing.T, *Config)
+	}{
+		{
+			name: "新規プロジェクトの追加",
+			initialConfig: `{
+				"projects": {
+					"existing-project": "EXISTING_PREFIX"
+				},
+				"mail_templates": {}
+			}`,
+			project:      "new-project",
+			mailType:     "prep",
+			templatePath: "templates/new-project-prep.txt",
+			wantErr:      false,
+			checkFunc: func(t *testing.T, config *Config) {
+				if _, ok := config.MailTemplates["new-project"]; !ok {
+					t.Error("new-project not added to mail_templates")
+				}
+				if path := config.MailTemplates["new-project"]["prep"]; path != "templates/new-project-prep.txt" {
+					t.Errorf("prep path = %v, want templates/new-project-prep.txt", path)
+				}
+			},
+		},
+		{
+			name: "既存プロジェクトに新しいタイプを追加",
+			initialConfig: `{
+				"projects": {
+					"existing-project": "EXISTING_PREFIX"
+				},
+				"mail_templates": {
+					"existing-project": {
+						"prep": "templates/existing-prep.txt"
+					}
+				}
+			}`,
+			project:      "existing-project",
+			mailType:     "memo",
+			templatePath: "templates/existing-memo.txt",
+			wantErr:      false,
+			checkFunc: func(t *testing.T, config *Config) {
+				templates := config.MailTemplates["existing-project"]
+				if templates["prep"] != "templates/existing-prep.txt" {
+					t.Error("Existing prep template should be preserved")
+				}
+				if templates["memo"] != "templates/existing-memo.txt" {
+					t.Errorf("memo path = %v, want templates/existing-memo.txt", templates["memo"])
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			configPath := filepath.Join(tmpDir, "config.json")
+			if err := os.WriteFile(configPath, []byte(tt.initialConfig), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			err := updateConfigWithMailTemplate(configPath, tt.project, tt.mailType, tt.templatePath)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("updateConfigWithMailTemplate() error = nil, wantErr true")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("updateConfigWithMailTemplate() error = %v, wantErr false", err)
+				return
+			}
+
+			config, err := loadConfig(configPath)
+			if err != nil {
+				t.Fatalf("Failed to load updated config: %v", err)
+			}
+
+			if tt.checkFunc != nil {
+				tt.checkFunc(t, config)
 			}
 		})
 	}
