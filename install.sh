@@ -64,6 +64,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "   mtg list"
     echo "   mtg prep -project <your-project>"
     echo "   mtg memo -project <your-project>"
+    echo "   mtg mail init -project <your-project> -type prep  # メールテンプレート作成"
+    echo "   mtg mail -project <your-project> -type prep       # メールテンプレート表示"
 else
     echo ""
     echo "⚠️  手動セットアップが必要です"
@@ -86,4 +88,6 @@ else
     echo "   mtg list"
     echo "   mtg prep -project <your-project>"
     echo "   mtg memo -project <your-project>"
+    echo "   mtg mail init -project <your-project> -type prep  # メールテンプレート作成"
+    echo "   mtg mail -project <your-project> -type prep       # メールテンプレート表示"
 fi
