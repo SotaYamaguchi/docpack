@@ -28,6 +28,10 @@ mtg prep -project your-project
 # MTG後の議事メモ整理
 mtg memo -project your-project
 
+# メールテンプレート作成（初回のみ）
+mtg mail init -project your-project -type prep  # MTG前送付メール用
+mtg mail init -project your-project -type memo  # MTG後送付メール用
+
 # メールテンプレート表示
 mtg mail -project your-project -type prep  # MTG前送付メール
 mtg mail -project your-project -type memo  # MTG後送付メール
@@ -56,7 +60,20 @@ mtg mail -project your-project -type memo  # MTG後送付メール
 
 ### メールテンプレート設定
 
-`~/.config/mtg/templates/` にテンプレートファイルを作成：
+#### 方法1: コマンドで作成（推奨）
+
+```bash
+# テンプレートファイルを自動作成
+mtg mail init -project your-project -type prep
+
+# ✓ テンプレートファイルを作成しました: ~/.config/mtg/templates/your-project-prep.txt
+# ✓ config.jsonを更新しました
+#
+# テンプレートを編集してください:
+#   vim ~/.config/mtg/templates/your-project-prep.txt
+```
+
+作成されたテンプレートを編集：
 
 ```
 To: customer@example.com, another@example.com
@@ -72,6 +89,10 @@ Subject: 【プロジェクトA】MTG資料送付 {{DATE}}
 
 ご確認のほど、よろしくお願いいたします。
 ```
+
+#### 方法2: 手動で作成
+
+`~/.config/mtg/templates/` にテンプレートファイルを直接作成し、`config.json` の `mail_templates` セクションに追加することもできます。
 
 **特徴：**
 - メーラーからのコピペがそのまま使える
