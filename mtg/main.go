@@ -488,6 +488,8 @@ func parseMailTemplate(content string) (*MailTemplate, error) {
 		Bcc: []string{},
 	}
 
+	currentDate := time.Now().Format("20060102")
+
 	lines := strings.Split(content, "\n")
 	bodyStart := -1
 
@@ -511,6 +513,9 @@ func parseMailTemplate(content string) (*MailTemplate, error) {
 	if bodyStart >= 0 && bodyStart < len(lines) {
 		template.Body = strings.Join(lines[bodyStart:], "\n")
 	}
+
+	template.Subject = strings.ReplaceAll(template.Subject, "{{DATE}}", currentDate)
+	template.Body = strings.ReplaceAll(template.Body, "{{DATE}}", currentDate)
 
 	return template, nil
 }

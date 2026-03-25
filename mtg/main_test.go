@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -489,6 +490,64 @@ Subject: 件名
 			if !stringSliceEqual(template.Bcc, tt.wantBcc) {
 				t.Errorf("Bcc = %v, want %v", template.Bcc, tt.wantBcc)
 			}
+			if template.Subject != tt.wantSubject {
+				t.Errorf("Subject = %v, want %v", template.Subject, tt.wantSubject)
+			}
+			if template.Body != tt.wantBody {
+				t.Errorf("Body = %v, want %v", template.Body, tt.wantBody)
+			}
+		})
+	}
+}
+
+func TestParseMailTemplateWithDate(t *testing.T) {
+	currentDate := time.Now().Format("20060102")
+
+	tests := []struct {
+		name        string
+		content     string
+		wantSubject string
+		wantBody    string
+	}{
+		{
+			name: "件名に{{DATE}}",
+			content: `To: test@example.com
+Subject: 【プロジェクト】資料送付 {{DATE}}
+
+本文`,
+			wantSubject: "【プロジェクト】資料送付 " + currentDate,
+			wantBody:    "本文",
+		},
+		{
+			name: "本文に{{DATE}}",
+			content: `To: test@example.com
+Subject: 件名
+
+送付資料：
+- 資料_{{DATE}}.pdf`,
+			wantSubject: "件名",
+			wantBody:    "送付資料：\n- 資料_" + currentDate + ".pdf",
+		},
+		{
+			name: "複数の{{DATE}}",
+			content: `To: test@example.com
+Subject: 資料送付 {{DATE}}
+
+{{DATE}}の資料です。
+ファイル名: doc_{{DATE}}.pdf`,
+			wantSubject: "資料送付 " + currentDate,
+			wantBody:    currentDate + "の資料です。\nファイル名: doc_" + currentDate + ".pdf",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			template, err := parseMailTemplate(tt.content)
+			if err != nil {
+				t.Errorf("parseMailTemplate() error = %v", err)
+				return
+			}
+
 			if template.Subject != tt.wantSubject {
 				t.Errorf("Subject = %v, want %v", template.Subject, tt.wantSubject)
 			}
