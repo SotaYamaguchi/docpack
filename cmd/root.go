@@ -13,8 +13,8 @@ var rootCmd = &cobra.Command{
 	Long: `mtg - 顧客プロジェクトのMTG前後でファイルを整理するツール
 
 使い方:
-  mtg prep [オプション]              MTG前の送付資料を準備
-  mtg memo [オプション]              MTG後の議事メモを整理
+  mtg files prep [オプション]        MTG前の送付資料を準備
+  mtg files memo [オプション]        MTG後の議事メモを整理
   mtg mail prep [オプション]         prep用メールテンプレートを表示
   mtg mail memo [オプション]         memo用メールテンプレートを表示
   mtg mail init prep [オプション]    prep用メールテンプレートを作成
@@ -24,8 +24,8 @@ var rootCmd = &cobra.Command{
 
 例:
   mtg list
-  mtg prep --project your-project
-  mtg memo --project your-project
+  mtg files prep --project your-project
+  mtg files memo --project your-project
   mtg mail prep --project your-project
   mtg mail init prep --project your-project`,
 }
@@ -36,8 +36,7 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.AddCommand(prepCmd)
-	rootCmd.AddCommand(memoCmd)
+	rootCmd.AddCommand(filesCmd)
 	rootCmd.AddCommand(mailCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(completionCmd)
