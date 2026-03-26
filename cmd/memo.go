@@ -10,6 +10,10 @@ import (
 var memoCmd = &cobra.Command{
 	Use:   "memo",
 	Short: "MTG後の議事メモを整理",
+	Args: cobra.NoArgs,
+	ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		project, _ := cmd.Flags().GetString("project")
 		prefix, _ := cmd.Flags().GetString("prefix")

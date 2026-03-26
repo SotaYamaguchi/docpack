@@ -14,6 +14,10 @@ import (
 var mailCmd = &cobra.Command{
 	Use:   "mail",
 	Short: "メールテンプレートを表示",
+	Args:  cobra.NoArgs,
+	ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		project, _ := cmd.Flags().GetString("project")
 		mailType, _ := cmd.Flags().GetString("type")
@@ -42,6 +46,10 @@ var mailCmd = &cobra.Command{
 var mailInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "メールテンプレートファイルを作成",
+	Args:  cobra.NoArgs,
+	ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		project, _ := cmd.Flags().GetString("project")
 		mailType, _ := cmd.Flags().GetString("type")
