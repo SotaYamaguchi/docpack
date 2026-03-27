@@ -15,7 +15,7 @@ var filesCmd = &cobra.Command{
 func newFilesTypeCmd(fileType string) *cobra.Command {
 	short := "MTG前の送付資料を準備"
 	process := file.ProcessPrep
-	if fileType == "memo" {
+	if fileType == "post" {
 		short = "MTG後の議事メモを整理"
 		process = file.ProcessMemo
 	}
@@ -54,5 +54,5 @@ func newFilesTypeCmd(fileType string) *cobra.Command {
 
 func init() {
 	filesCmd.AddCommand(newFilesTypeCmd("prep"))
-	filesCmd.AddCommand(newFilesTypeCmd("memo"))
+	filesCmd.AddCommand(newFilesTypeCmd("post"))
 }

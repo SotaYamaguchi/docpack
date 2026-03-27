@@ -16,10 +16,10 @@ var mailCmd = &cobra.Command{
 	Short: "メールテンプレートを表示・管理",
 }
 
-func newMailShowCmd(mailType string) *cobra.Command {
+func newMailShowCmd(name, internalType string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   mailType,
-		Short: fmt.Sprintf("%s用メールテンプレートを表示", mailType),
+		Use:   name,
+		Short: fmt.Sprintf("%s用メールテンプレートを表示", name),
 		Args:  cobra.NoArgs,
 		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -32,7 +32,7 @@ func newMailShowCmd(mailType string) *cobra.Command {
 				return fmt.Errorf("--project フラグが必要です")
 			}
 
-			template, err := mail.Get(configPath, project, mailType)
+			template, err := mail.Get(configPath, project, internalType)
 			if err != nil {
 				return err
 			}
@@ -57,10 +57,10 @@ var mailInitCmd = &cobra.Command{
 	Short: "メールテンプレートファイルを作成",
 }
 
-func newMailInitTypeCmd(mailType string) *cobra.Command {
+func newMailInitTypeCmd(name, internalType string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   mailType,
-		Short: fmt.Sprintf("%s用メールテンプレートを作成", mailType),
+		Use:   name,
+		Short: fmt.Sprintf("%s用メールテンプレートを作成", name),
 		Args:  cobra.NoArgs,
 		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -80,14 +80,14 @@ func newMailInitTypeCmd(mailType string) *cobra.Command {
 				return fmt.Errorf("テンプレートディレクトリ作成エラー: %w", err)
 			}
 
-			templatePath, existed, err := mail.CreateFile(templatesDir, project, mailType)
+			templatePath, existed, err := mail.CreateFile(templatesDir, project, internalType)
 			if err != nil {
 				return err
 			}
 
 			relPath := "templates/" + filepath.Base(templatePath)
 
-			if err := mail.UpdateConfig(configPath, project, mailType, relPath); err != nil {
+			if err := mail.UpdateConfig(configPath, project, internalType, relPath); err != nil {
 				return err
 			}
 
@@ -114,10 +114,10 @@ func newMailInitTypeCmd(mailType string) *cobra.Command {
 }
 
 func init() {
-	mailInitCmd.AddCommand(newMailInitTypeCmd("prep"))
-	mailInitCmd.AddCommand(newMailInitTypeCmd("memo"))
+	mailInitCmd.AddCommand(newMailInitTypeCmd("prep", "prep"))
+	mailInitCmd.AddCommand(newMailInitTypeCmd("post", "memo"))
 
-	mailCmd.AddCommand(newMailShowCmd("prep"))
-	mailCmd.AddCommand(newMailShowCmd("memo"))
+	mailCmd.AddCommand(newMailShowCmd("prep", "prep"))
+	mailCmd.AddCommand(newMailShowCmd("post", "memo"))
 	mailCmd.AddCommand(mailInitCmd)
 }

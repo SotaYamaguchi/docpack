@@ -14,18 +14,18 @@ var rootCmd = &cobra.Command{
 
 使い方:
   mtg files prep [オプション]        MTG前の送付資料を準備
-  mtg files memo [オプション]        MTG後の議事メモを整理
+  mtg files post [オプション]        MTG後の議事メモを整理
   mtg mail prep [オプション]         prep用メールテンプレートを表示
-  mtg mail memo [オプション]         memo用メールテンプレートを表示
+  mtg mail post [オプション]         post用メールテンプレートを表示
   mtg mail init prep [オプション]    prep用メールテンプレートを作成
-  mtg mail init memo [オプション]    memo用メールテンプレートを作成
+  mtg mail init post [オプション]    post用メールテンプレートを作成
   mtg list                           利用可能なプロジェクト一覧を表示
   mtg completion [shell]             タブ補完スクリプトを出力
 
 例:
   mtg list
   mtg files prep --project your-project
-  mtg files memo --project your-project
+  mtg files post --project your-project
   mtg mail prep --project your-project
   mtg mail init prep --project your-project`,
 }
