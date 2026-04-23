@@ -23,18 +23,22 @@ exec zsh
 mtg list
 
 # MTG前の資料準備
-mtg prep -project your-project
+mtg files prep -p your-project
 
 # MTG後の議事メモ整理
-mtg memo -project your-project
+mtg files post -p your-project
 
 # メールテンプレート作成（初回のみ）
-mtg mail init -project your-project -type prep  # MTG前送付メール用
-mtg mail init -project your-project -type memo  # MTG後送付メール用
+mtg mail init prep -p your-project  # MTG前送付メール用
+mtg mail init post -p your-project  # MTG後送付メール用
 
 # メールテンプレート表示
-mtg mail -project your-project -type prep  # MTG前送付メール
-mtg mail -project your-project -type memo  # MTG後送付メール
+mtg mail prep -p your-project  # MTG前送付メール
+mtg mail post -p your-project  # MTG後送付メール
+
+# メールテンプレート編集
+mtg mail edit prep -p your-project  # MTG前送付メール用テンプレートをエディタで編集
+mtg mail edit post -p your-project  # MTG後送付メール用テンプレートをエディタで編集
 ```
 
 ## 初期設定
@@ -64,16 +68,19 @@ mtg mail -project your-project -type memo  # MTG後送付メール
 
 ```bash
 # テンプレートファイルを自動作成
-mtg mail init -project your-project -type prep
+mtg mail init prep -p your-project
 
 # ✓ テンプレートファイルを作成しました: ~/.config/mtg/templates/your-project-prep.txt
 # ✓ config.jsonを更新しました
 #
 # テンプレートを編集してください:
 #   vim ~/.config/mtg/templates/your-project-prep.txt
+
+# エディタで直接編集（$EDITOR → $VISUAL → vi の順で起動）
+mtg mail edit prep -p your-project
 ```
 
-作成されたテンプレートを編集：
+テンプレートの書式：
 
 ```
 To: customer@example.com, another@example.com
