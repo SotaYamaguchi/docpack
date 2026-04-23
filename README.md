@@ -64,8 +64,6 @@ mtg mail edit post -p your-project  # MTG後送付メール用テンプレート
 
 ### メールテンプレート設定
 
-#### 方法1: コマンドで作成（推奨）
-
 ```bash
 # テンプレートファイルを自動作成
 mtg mail init prep -p your-project
@@ -96,10 +94,6 @@ Subject: 【プロジェクトA】MTG資料送付 {{DATE}}
 
 ご確認のほど、よろしくお願いいたします。
 ```
-
-#### 方法2: 手動で作成
-
-`~/.config/mtg/templates/` にテンプレートファイルを直接作成し、`config.json` の `mail_templates` セクションに追加することもできます。
 
 **特徴：**
 - メーラーからのコピペがそのまま使える
